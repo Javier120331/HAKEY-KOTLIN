@@ -1,5 +1,6 @@
 package com.example.hakey.ui.login.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -7,10 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.hakey.R
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
@@ -18,6 +21,7 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
     val password by viewModel.password.observeAsState(initial = "")
     val isEmailError by viewModel.isEmailError.observeAsState(initial = false)
     val isPasswordError by viewModel.isPasswordError.observeAsState(initial = false)
+    val isLoginButtonEnabled by viewModel.isLoginButtonEnabled.observeAsState(initial = false)
 
     Column(
         modifier = Modifier
@@ -26,6 +30,18 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.logohy),
+            contentDescription = "Logo",
+            modifier = Modifier.align(Alignment.TopCenter).size(200.dp)
+
+
+
+
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         Text(text = "Inicio de Sesión", style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -73,7 +89,8 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
 
         Button(
             onClick = { viewModel.onLoginClicked() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isLoginButtonEnabled
         ) {
             Text("Iniciar Sesión")
         }

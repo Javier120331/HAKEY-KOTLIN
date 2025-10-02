@@ -19,11 +19,21 @@ class LoginViewModel : ViewModel() {
     private val _isPasswordError = MutableLiveData<Boolean>()
     val isPasswordError: LiveData<Boolean> = _isPasswordError
 
+    private val _isLoginButtonEnabled = MutableLiveData<Boolean>()
+    val isLoginButtonEnabled: LiveData<Boolean> = _isLoginButtonEnabled
+
+    init {
+        _isLoginButtonEnabled.value = false
+    }
+
     fun onLoginDataChanged(email: String, pass: String) {
         _email.value = email
         _password.value = pass
-        _isEmailError.value = !isValidEmail(email)
-        _isPasswordError.value = !isValidPassword(pass)
+        val isEmailValid = isValidEmail(email)
+        val isPasswordValid = isValidPassword(pass)
+        _isEmailError.value = !isEmailValid
+        _isPasswordError.value = !isPasswordValid
+        _isLoginButtonEnabled.value = isEmailValid && isPasswordValid
     }
 
     private fun isValidEmail(email: String): Boolean {
