@@ -1,68 +1,81 @@
-// The package name remains the same
 package com.example.hakey.ui.login.ui
 
-// Import statements are corrected and cleaned up
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(viewModel: LoginViewModel = viewModel()) {
+    val email by viewModel.email.observeAsState(initial = "")
+    val password by viewModel.password.observeAsState(initial = "")
+    val isEmailError by viewModel.isEmailError.observeAsState(initial = false)
+    val isPasswordError by viewModel.isPasswordError.observeAsState(initial = false)
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        contentAlignment = Alignment.Center
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text(text = "Inicio de Sesión", style = MaterialTheme.typography.headlineMedium)
 
-        Login()
-    }
-}
+        Spacer(modifier = Modifier.height(32.dp))
 
+        OutlinedTextField(
+            value = email,
+            onValueChange = { viewModel.onLoginDataChanged(it, password) },
+            label = { Text("Correo Electrónico") },
+            singleLine = true,
+            isError = isEmailError,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (isEmailError) {
+            Text(
+                text = "Por favor, introduce un email válido.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
 
-@Composable
-fun Login(modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(16.dp))
-        EmailField()
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { viewModel.onLoginDataChanged(email, it) },
+            label = { Text("Contraseña") },
+            singleLine = true,
+            isError = isPasswordError,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (isPasswordError) {
+            Text(
+                text = "La contraseña debe tener al menos 8 caracteres.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { viewModel.onLoginClicked() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Iniciar Sesión")
+        }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun EmailField() {
-    TextField(
-        value = "",
-        onValueChange = { },
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text("Email") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-        singleLine = true,
-        maxLines = 1)
-}
-
-// This commented-out section shows the correct way to reference a drawable resource.
-/*
-@Composable
-fun ImagenHeader() {
-    Image(
-        // ERROR 3 FIX: You would use your app's R file, like R.drawable.logo_name
-        painter = painterResource(id = com.example.hakey.R.drawable.logo_hakey_header),
-        contentDescription = "Logo Hakey Header"
-    )
-}
-*/
