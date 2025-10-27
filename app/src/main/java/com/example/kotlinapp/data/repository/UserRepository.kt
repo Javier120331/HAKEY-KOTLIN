@@ -12,6 +12,7 @@ class UserRepository(context: Context) {
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_USER_PASSWORD = "user_password"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
+        private const val KEY_DISPLAY_NAME = "display_name"
     }
     
     // Registrar usuario
@@ -22,6 +23,8 @@ class UserRepository(context: Context) {
             sharedPreferences.edit().apply {
                 putString(KEY_USER_EMAIL, trimmedEmail)
                 putString(KEY_USER_PASSWORD, trimmedPassword)
+                // Save a default display name (part before @)
+                putString(KEY_DISPLAY_NAME, trimmedEmail.substringBefore('@'))
                 putBoolean(KEY_IS_LOGGED_IN, false)
                 apply()
             }
@@ -57,6 +60,16 @@ class UserRepository(context: Context) {
     // Obtener email del usuario
     fun getUserEmail(): String? {
         return sharedPreferences.getString(KEY_USER_EMAIL, null)
+    }
+
+    // Obtener display name del usuario
+    fun getDisplayName(): String? {
+        return sharedPreferences.getString(KEY_DISPLAY_NAME, null)
+    }
+
+    // Guardar display name del usuario
+    fun setDisplayName(name: String) {
+        sharedPreferences.edit().putString(KEY_DISPLAY_NAME, name).apply()
     }
     
     // Logout

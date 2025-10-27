@@ -32,9 +32,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import com.example.kotlinapp.data.repository.ShoppingCartRepository
+import com.example.kotlinapp.data.repository.UserRepository
 
 @Composable
-fun CartScreen(shoppingCart: ShoppingCartRepository) {
+fun CartScreen(shoppingCart: ShoppingCartRepository, onNavigateToCatalog: () -> Unit) {
     val cartItems = shoppingCart.getCartItems()
     val totalPrice = shoppingCart.getTotalPrice()
 
@@ -60,6 +61,19 @@ fun CartScreen(shoppingCart: ShoppingCartRepository) {
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 modifier = Modifier.padding(top = 16.dp)
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = { onNavigateToCatalog() },
+                modifier = Modifier
+                    .height(44.dp)
+                    .widthIn(min = 180.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(text = "Ir al Catálogo", color = MaterialTheme.colorScheme.onPrimary)
+            }
         }
     } else {
         Column(
@@ -255,9 +269,10 @@ fun OffersScreen() {
 
 
 @Composable
-fun AccountScreen(userEmail: String, onLogout: () -> Unit) {
-    // Local UI state for the mockup/profile design
-    var displayName by remember { mutableStateOf(userEmail.substringBefore('@')) }
+fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
+    // Load current data from repository
+    val userEmail = userRepository.getUserEmail() ?: "usuario@ejemplo.com"
+    var displayName by remember { mutableStateOf(userRepository.getDisplayName() ?: userEmail.substringBefore('@')) }
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
 
@@ -325,7 +340,7 @@ fun AccountScreen(userEmail: String, onLogout: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Editable display name
+                // Editable display name with save action
                 OutlinedTextField(
                     value = displayName,
                     onValueChange = { displayName = it },
@@ -342,6 +357,34 @@ fun AccountScreen(userEmail: String, onLogout: () -> Unit) {
                 if (infoMessage != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = infoMessage!!, color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        onClick = {
+                            // Persist display name
+                            userRepository.setDisplayName(displayName)
+                            infoMessage = "Nombre actualizado"
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(text = "Guardar", color = MaterialTheme.colorScheme.onPrimary)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            // Reset to saved value
+                            displayName = userRepository.getDisplayName() ?: userEmail.substringBefore('@')
+                            infoMessage = "Cambios descartados"
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "Cancelar")
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

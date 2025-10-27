@@ -134,8 +134,8 @@ fun MainHomeScreen(
             ) {
                 when (selectedTab) {
                     "catalog" -> CatalogScreen(shoppingCart = shoppingCart)
-                    "cart" -> CartScreen(shoppingCart = shoppingCart)
-                    "account" -> AccountScreen(userEmail = userEmail, onLogout = {
+                    "cart" -> CartScreen(shoppingCart = shoppingCart, onNavigateToCatalog = { selectedTab = "catalog" })
+                    "account" -> AccountScreen(userRepository = userRepository, onLogout = {
                         userRepository.logout()
                         onNavigateToLogin()
                     })
