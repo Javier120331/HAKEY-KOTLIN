@@ -34,6 +34,11 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf("") }
     var showSuccess by remember { mutableStateOf(false) }
 
+    // Per-field error messages
+    var emailError by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf("") }
+    var confirmPasswordError by remember { mutableStateOf("") }
+
     LaunchedEffect(showSuccess) {
         if (showSuccess) {
             kotlinx.coroutines.delay(1500)
@@ -63,17 +68,36 @@ fun RegisterScreen(
             onValueChange = {
                 email = it
                 showError = false
+                // Live email validation
+                emailError = when {
+                    it.isEmpty() -> ""
+                    !it.contains("@") || !it.contains(".") -> "Email inválido"
+                    else -> ""
+                }
             },
             label = { Text("Email") },
+            isError = emailError.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = 4.dp)
                 .onKeyEvent { keyEvent ->
                     keyEvent.key == Key.Tab
                 },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             shape = RoundedCornerShape(8.dp)
         )
+        if (emailError.isNotEmpty()) {
+            Text(
+                text = emailError,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         // Password TextField
         OutlinedTextField(
@@ -81,11 +105,18 @@ fun RegisterScreen(
             onValueChange = {
                 password = it
                 showError = false
+                // Live password validation
+                passwordError = when {
+                    it.isEmpty() -> ""
+                    it.length <= 6 -> "La contraseña debe tener más de 6 caracteres"
+                    else -> ""
+                }
             },
             label = { Text("Contraseña") },
+            isError = passwordError.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .padding(bottom = 4.dp)
                 .onKeyEvent { keyEvent ->
                     keyEvent.key == Key.Tab
                 },
@@ -93,6 +124,18 @@ fun RegisterScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             shape = RoundedCornerShape(8.dp)
         )
+        if (passwordError.isNotEmpty()) {
+            Text(
+                text = passwordError,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         // Confirm Password TextField
         OutlinedTextField(
@@ -100,11 +143,18 @@ fun RegisterScreen(
             onValueChange = {
                 confirmPassword = it
                 showError = false
+                // Live confirm validation
+                confirmPasswordError = when {
+                    it.isEmpty() -> ""
+                    it != password -> "Las contraseñas no coinciden"
+                    else -> ""
+                }
             },
             label = { Text("Confirmar Contraseña") },
+            isError = confirmPasswordError.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp)
+                .padding(bottom = 12.dp)
                 .onKeyEvent { keyEvent ->
                     keyEvent.key == Key.Tab
                 },
@@ -112,9 +162,21 @@ fun RegisterScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             shape = RoundedCornerShape(8.dp)
         )
+        if (confirmPasswordError.isNotEmpty()) {
+            Text(
+                text = confirmPasswordError,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
-        // Error Message
-        if (showError) {
+        // Error Message (from repository or final validation)
+        if (showError && errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
@@ -135,57 +197,46 @@ fun RegisterScreen(
             )
         }
 
-        // Register Button
+        // Register Button (enabled only when form is valid)
+        val isFormValid = email.isNotBlank() && password.length > 6 && password == confirmPassword && email.contains("@") && email.contains(".")
+
         Button(
             onClick = {
-                when {
-                    email.isEmpty() -> {
-                        errorMessage = "Por favor ingresa el email"
-                        showError = true
-                    }
-                    password.isEmpty() -> {
-                        errorMessage = "Por favor ingresa la contraseña"
-                        showError = true
-                    }
-                    !email.contains("@") || !email.contains(".") -> {
-                        errorMessage = "Email inválido"
-                        showError = true
-                    }
-                    password.length <= 6 -> {
-                        errorMessage = "La contraseña debe tener más de 6 caracteres"
-                        showError = true
-                    }
-                    password != confirmPassword -> {
-                        errorMessage = "Las contraseñas no coinciden"
-                        showError = true
-                    }
-                    else -> {
-                        if (userRepository.registerUser(email, password)) {
-                            showSuccess = true
-                            showError = false
-                            email = ""
-                            password = ""
-                            confirmPassword = ""
-                        } else {
-                            errorMessage = "Error en el registro"
-                            showError = true
-                        }
-                    }
+                // Final safety check before register
+                if (!isFormValid) {
+                    errorMessage = "Por favor corrige los datos del formulario"
+                    showError = true
+                    return@Button
+                }
+
+                if (userRepository.registerUser(email, password)) {
+                    showSuccess = true
+                    showError = false
+                    email = ""
+                    password = ""
+                    confirmPassword = ""
+                    emailError = ""
+                    passwordError = ""
+                    confirmPasswordError = ""
+                } else {
+                    errorMessage = "Error en el registro"
+                    showError = true
                 }
             },
+            enabled = isFormValid,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
                 .padding(bottom = 16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = if (isFormValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
                 text = "Registrarse",
                 fontSize = 16.sp,
-                color = Color.White
+                color = if (isFormValid) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
 
