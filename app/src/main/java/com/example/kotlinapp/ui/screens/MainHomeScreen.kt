@@ -108,7 +108,7 @@ fun MainHomeScreen(
             SmallTopAppBar(
                 title = {
                     Text(
-                        text = "GameStore",
+                        text = "HAKEY",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
@@ -190,7 +190,7 @@ fun DrawerContent(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "GameStore",
+                    text = "HAKEY",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
