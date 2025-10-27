@@ -23,7 +23,7 @@ class UserRepository(context: Context) {
             sharedPreferences.edit().apply {
                 putString(KEY_USER_EMAIL, trimmedEmail)
                 putString(KEY_USER_PASSWORD, trimmedPassword)
-                // Save a default display name (part before @)
+                // Guardar un nombre para mostrar predeterminado (parte antes de @)
                 putString(KEY_DISPLAY_NAME, trimmedEmail.substringBefore('@'))
                 putBoolean(KEY_IS_LOGGED_IN, false)
                 apply()

@@ -49,7 +49,7 @@ fun LoginScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // Email TextField
+        // Campo de texto de Email
         OutlinedTextField(
             value = email,
             onValueChange = {
@@ -67,7 +67,7 @@ fun LoginScreen(
             shape = RoundedCornerShape(8.dp)
         )
 
-        // Password TextField
+        // Campo de texto de Contraseña
         OutlinedTextField(
             value = password,
             onValueChange = {
@@ -86,7 +86,7 @@ fun LoginScreen(
             shape = RoundedCornerShape(8.dp)
         )
 
-        // Error Message
+        // Mensaje de error
         if (showError) {
             Text(
                 text = errorMessage,
@@ -97,7 +97,7 @@ fun LoginScreen(
             )
         }
 
-        // Login Button
+        // Botón de Login
         Button(
             onClick = {
                 when {
@@ -143,7 +143,7 @@ fun LoginScreen(
             )
         }
 
-        // Register Link
+        // Enlace de Registro
         Row(
             modifier = Modifier
                 .fillMaxWidth(),

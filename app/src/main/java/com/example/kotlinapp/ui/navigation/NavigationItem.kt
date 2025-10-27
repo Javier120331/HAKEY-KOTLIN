@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class NavigationItem(val route: String, val title: String, val icon: ImageVector) {
     object Catalog : NavigationItem("catalog", "Catálogo", Icons.Filled.VideogameAsset)
     object Cart : NavigationItem("cart", "Carrito", Icons.Filled.ShoppingCart)
-    // Offers removed from navbar
+    // Ofertas eliminadas de la barra de navegación
     object Account : NavigationItem("account", "Mi Cuenta", Icons.Filled.AccountCircle)
 }
 

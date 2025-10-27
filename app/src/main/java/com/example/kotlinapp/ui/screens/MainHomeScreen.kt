@@ -43,7 +43,7 @@ fun MainHomeScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show snackbars when shoppingCart reports an action message
+    // Mostrar snackbars cuando el carrito de compras reporta un mensaje de acción
     LaunchedEffect(shoppingCart.lastActionMessage) {
         val msg = shoppingCart.lastActionMessage
         if (!msg.isNullOrEmpty()) {
@@ -104,7 +104,7 @@ fun MainHomeScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-            // Top app bar (Material3 SmallTopAppBar)
+            // Barra superior de la aplicación (SmallTopAppBar de Material3)
             SmallTopAppBar(
                 title = {
                     Text(
@@ -143,7 +143,7 @@ fun MainHomeScreen(
                 }
             }
 
-            // BottomNavigation moved to Scaffold.bottomBar so Snackbars appear above it
+            // BottomNavigation movido a Scaffold.bottomBar para que los Snackbars aparezcan encima
         }
     }
 }
@@ -165,14 +165,14 @@ fun DrawerContent(
             .background(color = MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
-        // Header with avatar and email
+        // Encabezado con avatar y email
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Simple avatar with initial
+            // Avatar simple con inicial
             val initial = userEmail.firstOrNull()?.uppercaseChar() ?: 'U'
             Box(
                 modifier = Modifier
@@ -206,7 +206,7 @@ fun DrawerContent(
 
         Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
-        // Menu Items with selection highlight
+        // Elementos del menú con resaltado de selección
         Column(modifier = Modifier.padding(top = 8.dp)) {
             navigationItems.forEach { item ->
                 val isSelected = item.route == selectedTab
@@ -241,7 +241,7 @@ fun DrawerContent(
 
         Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
-        // Logout Button
+        // Botón de Cerrar Sesión
         Button(
             onClick = onLogout,
             modifier = Modifier
@@ -349,7 +349,7 @@ fun GameCard(game: Game, onAddToCart: () -> Unit = {}) {
                     )
                 }
 
-                // Rating
+                // Calificación
                 Row(
                     modifier = Modifier.padding(top = 8.dp),
                     verticalAlignment = Alignment.CenterVertically

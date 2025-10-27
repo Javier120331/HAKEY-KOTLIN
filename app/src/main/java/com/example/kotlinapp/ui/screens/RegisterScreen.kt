@@ -34,7 +34,7 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf("") }
     var showSuccess by remember { mutableStateOf(false) }
 
-    // Per-field error messages
+    // Mensajes de error por campo
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf("") }
@@ -62,13 +62,13 @@ fun RegisterScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // Email TextField
+        // Campo de texto de Email
         OutlinedTextField(
             value = email,
             onValueChange = {
                 email = it
                 showError = false
-                // Live email validation
+                // Validación en tiempo real del email
                 emailError = when {
                     it.isEmpty() -> ""
                     !it.contains("@") || !it.contains(".") -> "Email inválido"
@@ -99,13 +99,13 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Password TextField
+        // Campo de texto de Contraseña
         OutlinedTextField(
             value = password,
             onValueChange = {
                 password = it
                 showError = false
-                // Live password validation
+                // Validación en tiempo real de la contraseña
                 passwordError = when {
                     it.isEmpty() -> ""
                     it.length <= 6 -> "La contraseña debe tener más de 6 caracteres"
@@ -137,13 +137,13 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Confirm Password TextField
+        // Campo de texto de Confirmar Contraseña
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = {
                 confirmPassword = it
                 showError = false
-                // Live confirm validation
+                // Validación en tiempo real de confirmación
                 confirmPasswordError = when {
                     it.isEmpty() -> ""
                     it != password -> "Las contraseñas no coinciden"
@@ -175,7 +175,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Error Message (from repository or final validation)
+        // Mensaje de error (del repositorio o validación final)
         if (showError && errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
@@ -186,7 +186,7 @@ fun RegisterScreen(
             )
         }
 
-        // Success Message
+        // Mensaje de éxito
         if (showSuccess) {
             Text(
                 text = "Registro exitoso. Ahora inicia sesión",
@@ -197,12 +197,12 @@ fun RegisterScreen(
             )
         }
 
-        // Register Button (enabled only when form is valid)
+        // Botón de Registro (habilitado solo cuando el formulario es válido)
         val isFormValid = email.isNotBlank() && password.length > 6 && password == confirmPassword && email.contains("@") && email.contains(".")
 
         Button(
             onClick = {
-                // Final safety check before register
+                // Verificación de seguridad final antes del registro
                 if (!isFormValid) {
                     errorMessage = "Por favor corrige los datos del formulario"
                     showError = true
@@ -240,7 +240,7 @@ fun RegisterScreen(
             )
         }
 
-        // Login Link
+        // Enlace de Login
         Row(
             modifier = Modifier
                 .fillMaxWidth(),

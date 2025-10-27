@@ -6,11 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColorScheme(
-    // ENEBA-like purple palette
-    primary = Color(0xFF6A2DE6),        // vivid purple
-    secondary = Color(0xFF9B51FF),      // bright secondary purple
-    tertiary = Color(0xFFB388FF),       // soft/pastel purple
-    background = Color(0xFFF4EEFF),     // very light purple background
+    // Paleta de colores púrpura estilo ENEBA
+    primary = Color(0xFF6A2DE6),        // púrpura vívido
+    secondary = Color(0xFF9B51FF),      // púrpura secundario brillante
+    tertiary = Color(0xFFB388FF),       // púrpura suave/pastel
+    background = Color(0xFFF4EEFF),     // fondo púrpura muy claro
     surface = Color.White,
     error = Color(0xFFCF6679)
 )

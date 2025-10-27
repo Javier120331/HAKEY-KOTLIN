@@ -81,7 +81,7 @@ fun CartScreen(shoppingCart: ShoppingCartRepository, onNavigateToCatalog: () -> 
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.background)
         ) {
-            // Header
+            // Encabezado
                 Text(
                     text = "🛒 Carrito (${cartItems.size} items)",
                     fontSize = 24.sp,
@@ -141,7 +141,7 @@ fun CartScreen(shoppingCart: ShoppingCartRepository, onNavigateToCatalog: () -> 
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Row of clearer action buttons: Add (primary), Decrease (outlined), Remove (error)
+                                // Fila de botones de acción más claros: Agregar (primario), Decrementar (con contorno), Eliminar (error)
                                 ElevatedButton(
                                     onClick = { shoppingCart.addToCart(cartItem.game) },
                                     modifier = Modifier
@@ -270,7 +270,7 @@ fun OffersScreen() {
 
 @Composable
 fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
-    // Load current data from repository
+    // Cargar datos actuales del repositorio
     val userEmail = userRepository.getUserEmail() ?: "usuario@ejemplo.com"
     var displayName by remember { mutableStateOf(userRepository.getDisplayName() ?: userEmail.substringBefore('@')) }
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
@@ -310,7 +310,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
                             .clip(RoundedCornerShape(60.dp))
                     )
                 } else {
-                    // Placeholder avatar with initial
+                    // Avatar de marcador de posición con inicial
                     val initial = displayName.firstOrNull()?.uppercaseChar() ?: 'U'
                     Box(
                         modifier = Modifier
@@ -324,7 +324,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Photo action buttons (placeholders)
+                // Botones de acción de foto (marcadores de posición)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
                         onClick = { infoMessage = "Funcionalidad de cámara pendiente" },
@@ -340,7 +340,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Editable display name with save action
+                // Nombre para mostrar editable con acción de guardar
                 OutlinedTextField(
                     value = displayName,
                     onValueChange = { displayName = it },
@@ -351,7 +351,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Email (read-only)
+                // Email (solo lectura)
                 Text(text = userEmail, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
 
                 if (infoMessage != null) {
@@ -364,7 +364,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
                         onClick = {
-                            // Persist display name
+                            // Persistir nombre para mostrar
                             userRepository.setDisplayName(displayName)
                             infoMessage = "Nombre actualizado"
                         },
@@ -377,7 +377,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
 
                     OutlinedButton(
                         onClick = {
-                            // Reset to saved value
+                            // Restablecer al valor guardado
                             displayName = userRepository.getDisplayName() ?: userEmail.substringBefore('@')
                             infoMessage = "Cambios descartados"
                         },
@@ -389,7 +389,7 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Logout
+                // Cerrar sesión
                 Button(
                     onClick = onLogout,
                     modifier = Modifier.fillMaxWidth(),
