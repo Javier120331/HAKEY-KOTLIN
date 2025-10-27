@@ -1,12 +1,17 @@
 package com.example.kotlinapp.data.repository
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.example.kotlinapp.data.model.CartItem
 import com.example.kotlinapp.data.model.Game
 
 class ShoppingCartRepository {
     
     private val cartItems = mutableStateListOf<CartItem>()
+    // Último mensaje de acción (por ejemplo: "Agregado: Nombre del juego")
+    var lastActionMessage by mutableStateOf<String?>(null)
     
     fun addToCart(game: Game) {
         val existingItem = cartItems.find { it.game.id == game.id }
@@ -15,9 +20,11 @@ class ShoppingCartRepository {
             // Si ya existe, aumentar cantidad
             val index = cartItems.indexOf(existingItem)
             cartItems[index] = CartItem(game, existingItem.quantity + 1)
+            lastActionMessage = "Agregado: ${game.name} (x${existingItem.quantity + 1})"
         } else {
             // Si no existe, agregar nuevo item
             cartItems.add(CartItem(game, 1))
+            lastActionMessage = "Agregado: ${game.name}"
         }
     }
     

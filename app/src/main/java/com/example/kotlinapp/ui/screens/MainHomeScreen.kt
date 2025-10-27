@@ -9,8 +9,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,55 +29,102 @@ import com.example.kotlinapp.data.repository.UserRepository
 import com.example.kotlinapp.ui.navigation.NavigationItem
 import com.example.kotlinapp.ui.navigation.navigationItems
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainHomeScreen(
     userRepository: UserRepository,
     onNavigateToLogin: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf("catalog") }
-    var drawerOpen by remember { mutableStateOf(false) }
     val userEmail = userRepository.getUserEmail() ?: "Usuario"
     val shoppingCart = remember { ShoppingCartRepository() }
 
-    if (drawerOpen) {
-        DrawerContent(
-            userEmail = userEmail,
-            selectedTab = selectedTab,
-            onNavigateToRoute = { route ->
-                selectedTab = route
-                drawerOpen = false
-            },
-            onLogout = {
-                userRepository.logout()
-                drawerOpen = false
-                onNavigateToLogin()
-            },
-            onClose = { drawerOpen = false }
-        )
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Custom TopAppBar (sin APIs experimentales)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(color = MaterialTheme.colorScheme.primary)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { drawerOpen = !drawerOpen }) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onPrimary)
-                }
-                Text(
-                    text = "GameStore",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.weight(1f)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show snackbars when shoppingCart reports an action message
+    LaunchedEffect(shoppingCart.lastActionMessage) {
+        val msg = shoppingCart.lastActionMessage
+        if (!msg.isNullOrEmpty()) {
+            snackbarHostState.showSnackbar(msg)
+            shoppingCart.lastActionMessage = null
+        }
+    }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                DrawerContent(
+                    userEmail = userEmail,
+                    selectedTab = selectedTab,
+                    onNavigateToRoute = { route ->
+                        selectedTab = route
+                        scope.launch { drawerState.close() }
+                    },
+                    onLogout = {
+                        userRepository.logout()
+                        scope.launch { drawerState.close() }
+                        onNavigateToLogin()
+                    },
+                    onClose = { scope.launch { drawerState.close() } }
                 )
             }
+        }
+    ) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    navigationItems.forEach { item ->
+                        NavigationBarItem(
+                            icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
+                            label = { Text(item.title, fontSize = 10.sp) },
+                            selected = selectedTab == item.route,
+                            onClick = { selectedTab = item.route },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                selectedTextColor = MaterialTheme.colorScheme.onPrimary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+                                unselectedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
+                                indicatorColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+            // Top app bar (Material3 SmallTopAppBar)
+            SmallTopAppBar(
+                title = {
+                    Text(
+                        text = "GameStore",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { scope.launch { if (drawerState.isOpen) drawerState.close() else drawerState.open() } }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                },
+                colors = TopAppBarDefaults.smallTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Contenido principal
             Box(
@@ -93,31 +143,12 @@ fun MainHomeScreen(
                 }
             }
 
-            // Bottom Navigation Bar
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                navigationItems.forEach { item ->
-                    NavigationBarItem(
-                        icon = { Text(item.icon, fontSize = 20.sp) },
-                        label = { Text(item.title, fontSize = 10.sp) },
-                        selected = selectedTab == item.route,
-                        onClick = { selectedTab = item.route },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                            selectedTextColor = MaterialTheme.colorScheme.onPrimary,
-                            unselectedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-                            unselectedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-                            indicatorColor = Color.Transparent
-                        )
-                    )
-                }
-            }
+            // BottomNavigation moved to Scaffold.bottomBar so Snackbars appear above it
         }
     }
 }
+}
+
 
 @Composable
 fun DrawerContent(
@@ -190,10 +221,11 @@ fun DrawerContent(
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = item.icon,
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(end = 12.dp)
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.title,
+                        modifier = Modifier.padding(end = 12.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = item.title,
