@@ -14,15 +14,23 @@ class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        userRepository = UserRepository(this)
-        
-        setContent {
-            KotlinAppTheme {
-                RegisterScreen(
-                    userRepository = userRepository,
-                    onNavigateToLogin = { finish() }
-                )
+        try {
+            android.util.Log.d("RegisterActivity", "Iniciando RegisterActivity...")
+            
+            userRepository = UserRepository(this)
+            android.util.Log.d("RegisterActivity", "UserRepository inicializado")
+            
+            setContent {
+                KotlinAppTheme {
+                    RegisterScreen(
+                        userRepository = userRepository,
+                        onNavigateToLogin = { finish() }
+                    )
+                }
             }
+        } catch (e: Exception) {
+            android.util.Log.e("RegisterActivity", "ERROR en onCreate: ${e.message}", e)
+            e.printStackTrace()
         }
     }
 }

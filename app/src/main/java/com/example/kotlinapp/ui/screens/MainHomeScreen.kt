@@ -45,10 +45,14 @@ fun MainHomeScreen(
 
     // Mostrar snackbars cuando el carrito de compras reporta un mensaje de acción
     LaunchedEffect(shoppingCart.lastActionMessage) {
-        val msg = shoppingCart.lastActionMessage
-        if (!msg.isNullOrEmpty()) {
-            snackbarHostState.showSnackbar(msg)
-            shoppingCart.lastActionMessage = null
+        try {
+            val msg = shoppingCart.lastActionMessage
+            if (!msg.isNullOrEmpty()) {
+                snackbarHostState.showSnackbar(msg)
+                shoppingCart.lastActionMessage = null
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainHomeScreen", "Error en snackbar: ${e.message}")
         }
     }
 
@@ -74,6 +78,27 @@ fun MainHomeScreen(
         }
     ) {
         Scaffold(
+            topBar = {
+                SmallTopAppBar(
+                    title = {
+                        Text(
+                            text = "HAKEY",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { if (drawerState.isOpen) drawerState.close() else drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onPrimary)
+                        }
+                    },
+                    colors = TopAppBarDefaults.smallTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 NavigationBar(
@@ -99,38 +124,10 @@ fun MainHomeScreen(
                 }
             }
         ) { innerPadding ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-            ) {
-            // Barra superior de la aplicación (SmallTopAppBar de Material3)
-            SmallTopAppBar(
-                title = {
-                    Text(
-                        text = "HAKEY",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { scope.launch { if (drawerState.isOpen) drawerState.close() else drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.smallTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // Contenido principal
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
             ) {
                 when (selectedTab) {
                     "catalog" -> CatalogScreen(shoppingCart = shoppingCart)
@@ -142,13 +139,9 @@ fun MainHomeScreen(
                     else -> CatalogScreen(shoppingCart = shoppingCart)
                 }
             }
-
-            // BottomNavigation movido a Scaffold.bottomBar para que los Snackbars aparezcan encima
         }
     }
 }
-}
-
 
 @Composable
 fun DrawerContent(
@@ -265,8 +258,28 @@ fun DrawerContent(
 
 @Composable
 fun CatalogScreen(shoppingCart: ShoppingCartRepository) {
-    val gameRepository = GameRepository()
-    val games = gameRepository.getGames()
+    val gameRepository = remember { GameRepository() }
+    var games by remember { mutableStateOf<List<Game>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        try {
+            android.util.Log.d("CatalogScreen", "Cargando juegos...")
+            isLoading = true
+            val loadedGames = gameRepository.getGames()
+            android.util.Log.d("CatalogScreen", "Juegos cargados: ${loadedGames.size}")
+            games = loadedGames
+            isLoading = false
+            if (games.isEmpty()) {
+                errorMessage = "No se pudieron cargar los juegos"
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("CatalogScreen", "Error cargando juegos: ${e.message}", e)
+            isLoading = false
+            errorMessage = "Error: ${e.message}"
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -285,8 +298,35 @@ fun CatalogScreen(shoppingCart: ShoppingCartRepository) {
             )
         }
 
-        items(games) { game ->
-            GameCard(game, onAddToCart = { shoppingCart.addToCart(game) })
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Cargando...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        } else if (errorMessage != null) {
+            item {
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+            }
+        } else {
+            items(games) { game ->
+                GameCard(game, onAddToCart = { shoppingCart.addToCart(game) })
+            }
         }
     }
 }

@@ -20,6 +20,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
@@ -27,6 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import android.net.Uri
+import androidx.core.content.FileProvider
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -270,11 +281,65 @@ fun OffersScreen() {
 
 @Composable
 fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
+    val context = LocalContext.current
+    
     // Cargar datos actuales del repositorio
     val userEmail = userRepository.getUserEmail() ?: "usuario@ejemplo.com"
     var displayName by remember { mutableStateOf(userRepository.getDisplayName() ?: userEmail.substringBefore('@')) }
-    var profileImageUrl by remember { mutableStateOf<String?>(null) }
+    var profileImageUrl by remember { mutableStateOf(userRepository.getProfileImageUrl()) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Crear URI para la foto de cámara dinámicamente
+    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Launcher para tomar foto con cámara
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && cameraImageUri != null) {
+            // La foto se guardó en cameraImageUri
+            profileImageUrl = cameraImageUri.toString()
+            userRepository.setProfileImageUrl(cameraImageUri.toString())
+            infoMessage = "Foto de cámara guardada"
+        } else {
+            infoMessage = "Foto cancelada"
+        }
+    }
+    
+    // Launcher para seleccionar imagen de la galería
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            // Convertir URI a String y guardar
+            val imageUriString = uri.toString()
+            profileImageUrl = imageUriString
+            userRepository.setProfileImageUrl(imageUriString)
+            infoMessage = "Foto actualizada"
+        }
+    }
+    
+    // Función para crear el URI y lanzar cámara
+    val launchCamera = {
+        try {
+            val cacheDir = context.cacheDir
+            val photoDir = File(cacheDir, "camera_photos")
+            if (!photoDir.exists()) photoDir.mkdirs()
+            
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+            val photoFile = File(photoDir, "IMG_$timeStamp.jpg")
+            
+            cameraImageUri = FileProvider.getUriForFile(
+                context,
+                "com.example.kotlinapp.fileprovider",
+                photoFile
+            )
+            
+            cameraLauncher.launch(cameraImageUri)
+        } catch (e: Exception) {
+            infoMessage = "Error al acceder a la cámara: ${e.message}"
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -324,17 +389,19 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Botones de acción de foto (marcadores de posición)
+                // Botones de acción de foto
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = { infoMessage = "Funcionalidad de cámara pendiente" },
+                        onClick = { launchCamera() },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text(text = "Tomar foto", color = MaterialTheme.colorScheme.onPrimary)
+                        Text(text = "Cámara", color = MaterialTheme.colorScheme.onPrimary)
                     }
 
-                    OutlinedButton(onClick = { infoMessage = "Funcionalidad de galería pendiente" }) {
-                        Text(text = "Seleccionar", color = MaterialTheme.colorScheme.onBackground)
+                    OutlinedButton(
+                        onClick = { galleryLauncher.launch("image/*") }
+                    ) {
+                        Text(text = "Galería", color = MaterialTheme.colorScheme.primary)
                     }
                 }
 

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kotlinapp.data.repository.UserRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -32,6 +33,8 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -118,11 +121,16 @@ fun LoginScreen(
                         showError = true
                     }
                     else -> {
-                        if (userRepository.loginUser(email, password)) {
-                            onNavigateToHome()
-                        } else {
-                            errorMessage = "Email o contraseña incorrectos"
-                            showError = true
+                        isLoading = true
+                        coroutineScope.launch {
+                            val success = userRepository.loginUser(email, password)
+                            isLoading = false
+                            if (success) {
+                                onNavigateToHome()
+                            } else {
+                                errorMessage = "Email o contraseña incorrectos"
+                                showError = true
+                            }
                         }
                     }
                 }
@@ -131,16 +139,25 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(50.dp)
                 .padding(bottom = 16.dp),
+            enabled = !isLoading,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text(
-                text = "Iniciar Sesión",
-                fontSize = 16.sp,
-                color = Color.White
-            )
+            if (isLoading) {
+                Text(
+                    text = "Cargando...",
+                    fontSize = 14.sp,
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    text = "Iniciar Sesión",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
         }
 
         // Enlace de Registro

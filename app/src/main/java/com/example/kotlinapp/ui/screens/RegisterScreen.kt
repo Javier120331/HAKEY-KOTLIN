@@ -21,18 +21,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kotlinapp.data.repository.UserRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
     userRepository: UserRepository,
     onNavigateToLogin: () -> Unit
 ) {
+    var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var showSuccess by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Mensajes de error por campo
     var emailError by remember { mutableStateOf("") }
@@ -41,7 +45,7 @@ fun RegisterScreen(
 
     LaunchedEffect(showSuccess) {
         if (showSuccess) {
-            kotlinx.coroutines.delay(1500)
+            delay(1500)
             onNavigateToLogin()
         }
     }
@@ -60,6 +64,21 @@ fun RegisterScreen(
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        // Campo de texto de Nombre
+        OutlinedTextField(
+            value = nombre,
+            onValueChange = {
+                nombre = it
+                showError = false
+            },
+            label = { Text("Nombre") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            shape = RoundedCornerShape(8.dp)
         )
 
         // Campo de texto de Email
@@ -198,7 +217,7 @@ fun RegisterScreen(
         }
 
         // Botón de Registro (habilitado solo cuando el formulario es válido)
-        val isFormValid = email.isNotBlank() && password.length > 6 && password == confirmPassword && email.contains("@") && email.contains(".")
+        val isFormValid = nombre.isNotBlank() && email.isNotBlank() && password.length > 6 && password == confirmPassword && email.contains("@") && email.contains(".")
 
         Button(
             onClick = {
@@ -209,35 +228,42 @@ fun RegisterScreen(
                     return@Button
                 }
 
-                if (userRepository.registerUser(email, password)) {
-                    showSuccess = true
-                    showError = false
-                    email = ""
-                    password = ""
-                    confirmPassword = ""
-                    emailError = ""
-                    passwordError = ""
-                    confirmPasswordError = ""
-                } else {
-                    errorMessage = "Error en el registro"
-                    showError = true
+                isLoading = true
+                coroutineScope.launch {
+                    val success = userRepository.registerUser(nombre, email, password)
+                    isLoading = false
+                    if (success) {
+                        showSuccess = true
+                        showError = false
+                    } else {
+                        errorMessage = "Error en el registro. Verifica los datos e intenta nuevamente"
+                        showError = true
+                    }
                 }
             },
-            enabled = isFormValid,
+            enabled = isFormValid && !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
                 .padding(bottom = 16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isFormValid) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                containerColor = if (isFormValid && !isLoading) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text(
-                text = "Registrarse",
-                fontSize = 16.sp,
-                color = if (isFormValid) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+            if (isLoading) {
+                Text(
+                    text = "Registrando...",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text(
+                    text = "Registrarse",
+                    fontSize = 16.sp,
+                    color = if (isFormValid) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
 
         // Enlace de Login
