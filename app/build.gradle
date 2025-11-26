@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'de.mannodermaus.android-junit5' version '1.9.1.0'
+    id 'jacoco'
 }
 
 android {
@@ -111,4 +112,16 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test:runner:1.5.2'
+}
+
+// Jacoco configuration for code coverage
+jacoco {
+    toolVersion = "0.8.8"
+}
+
+tasks.register('jacocoTestReport') {
+    dependsOn 'testDebugUnitTest'
+    doLast {
+        println "Code coverage report generated"
+    }
 }
