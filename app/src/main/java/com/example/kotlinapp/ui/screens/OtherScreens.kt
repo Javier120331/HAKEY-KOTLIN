@@ -5,16 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -39,18 +33,26 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import com.example.kotlinapp.data.repository.ShoppingCartRepository
 import com.example.kotlinapp.data.repository.UserRepository
+import kotlinx.coroutines.delay
 
 @Composable
 fun CartScreen(shoppingCart: ShoppingCartRepository, onNavigateToCatalog: () -> Unit) {
     val cartItems = shoppingCart.getCartItems()
     val totalPrice = shoppingCart.getTotalPrice()
+    var showPaymentForm by remember { mutableStateOf(false) }
 
-    if (cartItems.isEmpty()) {
+    if (showPaymentForm) {
+        PaymentFormScreen(
+            totalPrice = totalPrice,
+            onPaymentSuccess = {
+                shoppingCart.clearCart()
+                showPaymentForm = false
+            },
+            onCancel = { showPaymentForm = false }
+        )
+    } else if (cartItems.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -230,7 +232,7 @@ fun CartScreen(shoppingCart: ShoppingCartRepository, onNavigateToCatalog: () -> 
                     )
 
                     Button(
-                        onClick = { /* Procesar pago */ },
+                        onClick = { showPaymentForm = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp),
@@ -464,6 +466,232 @@ fun AccountScreen(userRepository: UserRepository, onLogout: () -> Unit) {
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(text = "Cerrar Sesión", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PaymentFormScreen(
+    totalPrice: Double,
+    onPaymentSuccess: () -> Unit,
+    onCancel: () -> Unit
+) {
+    var cardholderName by remember { mutableStateOf("") }
+    var cardNumber by remember { mutableStateOf("") }
+    var expiryDate by remember { mutableStateOf("") }
+    var cvv by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var isProcessing by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // LaunchedEffect para simular procesamiento de pago
+    LaunchedEffect(isProcessing) {
+        if (isProcessing) {
+            delay(2000)
+            onPaymentSuccess()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.background)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            item {
+                Text(
+                    text = "Información de Pago",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+            }
+
+            item {
+                Text(
+                    text = "Monto Total: $${String.format("%.2f", totalPrice)}",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+            }
+
+            item {
+                OutlinedTextField(
+                    value = cardholderName,
+                    onValueChange = { cardholderName = it },
+                    label = { Text("Nombre del Titular") },
+                    placeholder = { Text("Juan Pérez") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    isError = errorMessage != null && cardholderName.isEmpty()
+                )
+            }
+
+            item {
+                OutlinedTextField(
+                    value = cardNumber,
+                    onValueChange = {
+                        if (it.length <= 19) {
+                            cardNumber = it.filter { char -> char.isDigit() }
+                                .chunked(4)
+                                .joinToString(" ")
+                        }
+                    },
+                    label = { Text("Número de Tarjeta") },
+                    placeholder = { Text("1234 5678 9012 3456") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    isError = errorMessage != null && cardNumber.replace(" ", "").length != 16
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = expiryDate,
+                        onValueChange = {
+                            if (it.length <= 5) {
+                                expiryDate = if (it.length == 2 && expiryDate.length == 1) {
+                                    "$it/"
+                                } else {
+                                    it.filter { char -> char.isDigit() || char == '/' }
+                                }
+                            }
+                        },
+                        label = { Text("Expiración") },
+                        placeholder = { Text("MM/YY") },
+                        modifier = Modifier.weight(1f),
+                        isError = errorMessage != null && expiryDate.length != 5
+                    )
+
+                    OutlinedTextField(
+                        value = cvv,
+                        onValueChange = {
+                            if (it.length <= 4) {
+                                cvv = it.filter { char -> char.isDigit() }
+                            }
+                        },
+                        label = { Text("CVV") },
+                        placeholder = { Text("123") },
+                        modifier = Modifier.weight(1f),
+                        isError = errorMessage != null && cvv.length != 3
+                    )
+                }
+            }
+
+            item {
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    placeholder = { Text("usuario@ejemplo.com") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    isError = errorMessage != null && email.isEmpty()
+                )
+            }
+
+            if (errorMessage != null) {
+                item {
+                    Text(
+                        text = errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+
+        // Botones
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = onCancel,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                enabled = !isProcessing,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Cancelar", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+
+            Button(
+                onClick = {
+                    // Validar datos
+                    when {
+                        cardholderName.isEmpty() -> {
+                            errorMessage = "Ingresa el nombre del titular"
+                        }
+                        cardNumber.replace(" ", "").length != 16 -> {
+                            errorMessage = "Número de tarjeta debe tener 16 dígitos"
+                        }
+                        expiryDate.length != 5 -> {
+                            errorMessage = "Expiración debe ser MM/YY"
+                        }
+                        cvv.length != 3 -> {
+                            errorMessage = "CVV debe tener 3 dígitos"
+                        }
+                        email.isEmpty() || !email.contains("@") -> {
+                            errorMessage = "Ingresa un email válido"
+                        }
+                        else -> {
+                            errorMessage = null
+                            isProcessing = true
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                enabled = !isProcessing,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Pagar ${String.format("$%.2f", totalPrice)}", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }

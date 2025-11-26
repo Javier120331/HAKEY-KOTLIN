@@ -28,6 +28,7 @@ import com.example.kotlinapp.data.repository.ShoppingCartRepository
 import com.example.kotlinapp.data.repository.UserRepository
 import com.example.kotlinapp.ui.navigation.NavigationItem
 import com.example.kotlinapp.ui.navigation.navigationItems
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +38,7 @@ fun MainHomeScreen(
 ) {
     var selectedTab by remember { mutableStateOf("catalog") }
     val userEmail = userRepository.getUserEmail() ?: "Usuario"
+    var profileImageUrl by remember { mutableStateOf(userRepository.getProfileImageUrl()) }
     val shoppingCart = remember { ShoppingCartRepository() }
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -56,12 +58,18 @@ fun MainHomeScreen(
         }
     }
 
+    // Actualizar la imagen de perfil cuando cambia en el repositorio
+    LaunchedEffect(Unit) {
+        profileImageUrl = userRepository.getProfileImageUrl()
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 DrawerContent(
                     userEmail = userEmail,
+                    profileImageUrl = profileImageUrl,
                     selectedTab = selectedTab,
                     onNavigateToRoute = { route ->
                         selectedTab = route
@@ -146,6 +154,7 @@ fun MainHomeScreen(
 @Composable
 fun DrawerContent(
     userEmail: String,
+    profileImageUrl: String?,
     selectedTab: String,
     onNavigateToRoute: (String) -> Unit,
     onLogout: () -> Unit,
@@ -165,18 +174,32 @@ fun DrawerContent(
                 .padding(bottom = 20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar simple con inicial
-            val initial = userEmail.firstOrNull()?.uppercaseChar() ?: 'U'
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(28.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = initial.toString(), color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            // Avatar con imagen de perfil o inicial
+            if (!profileImageUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = profileImageUrl,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(28.dp)
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                val initial = userEmail.firstOrNull()?.uppercaseChar() ?: 'U'
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(28.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = initial.toString(), color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
